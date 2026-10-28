@@ -23,6 +23,12 @@
     "vitest": "^5.0.5"
   },
   "dependencies": {
-    "@prisma/client": "^6.19.3"
+    "@bitacora/shared": "^0.0.0",
+    "@prisma/client": "^6.19.3",
+    "cors": "^2.8.6",
+    "dotenv": "^16.6.1",
+    "express": "^4.22.3",
+    "jsonwebtoken": "^9.0.3",
+    "qrcode": "^1.5.4"
   }
 }
