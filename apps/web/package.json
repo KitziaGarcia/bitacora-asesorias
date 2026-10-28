@@ -1,0 +1,23 @@
+{
+  "name": "@bitacora/web",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "node typecheck.cjs --noEmit && vite build",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^6.0.10",
+    "typescript": "~5.9.3",
+    "vite": "^8.3.5",
+    "vitest": "^5.0.5",
+    "vue-tsc": "^3.3.13"
+  },
+  "dependencies": {
+    "@bitacora/shared": "^0.0.0",
+    "vue": "^3.5.44",
+    "vue-router": "^5.4.0"
+  }
+}
