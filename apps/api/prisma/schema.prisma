@@ -1,0 +1,32 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Student {
+  id            String         @id // school student ID, e.g. "A01000001"
+  name          String
+  createdAt     DateTime       @default(now())
+  registrations Registration[]
+}
+
+model Class {
+  code          String         @id // e.g. "oop"
+  name          String
+  registrations Registration[]
+}
+
+model Registration {
+  id           String   @id @default(uuid())
+  studentId    String
+  classCode    String
+  registeredAt DateTime @default(now())
+  student      Student  @relation(fields: [studentId], references: [id])
+  class        Class    @relation(fields: [classCode], references: [code])
+
+  @@index([studentId, classCode, registeredAt])
+}

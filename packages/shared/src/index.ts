@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 export interface ClassInfo { code: string; name: string }
-export interface RegistrationDto { id: string; classCode: string; className: string; registeredAt: string }
+export interface RegistrationDto { id: string; studentId: string; classCode: string; className: string; registeredAt: string }
 
 export const CLASSES: readonly ClassInfo[] = [
   { code: 'oop', name: 'OOP' },
@@ -14,3 +14,6 @@ export const CLASSES: readonly ClassInfo[] = [
 export const findClass = (code: string) => CLASSES.find(c => c.code === code);
 
 export const ScanBody = z.object({ classCode: z.string().min(1), sig: z.string().min(1) });
+
+export const LoginBody = z.object({ studentId: z.string().trim().min(1) });
+export interface StudentDto { studentId: string; name: string }

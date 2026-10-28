@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { CLASSES, findClass, ScanBody } from './index';
+import { CLASSES, findClass, ScanBody, LoginBody } from './index';
 
 describe('shared', () => {
   it('lists the six preset classes in order with unique codes', () => {
@@ -16,5 +16,10 @@ describe('shared', () => {
     expect(ScanBody.safeParse({ classCode: 'oop', sig: 'abc' }).success).toBe(true);
     expect(ScanBody.safeParse({ classCode: 'oop' }).success).toBe(false);
     expect(ScanBody.safeParse({ classCode: '', sig: 'x' }).success).toBe(false);
+  });
+  it('LoginBody trims and requires a student id', () => {
+    expect(LoginBody.parse({ studentId: '  A01  ' })).toEqual({ studentId: 'A01' });
+    expect(LoginBody.safeParse({ studentId: '   ' }).success).toBe(false);
+    expect(LoginBody.safeParse({}).success).toBe(false);
   });
 });
