@@ -14,7 +14,7 @@ describe('errorMessage', () => {
   it('has distinct friendly messages per known code and a generic fallback', () => {
     const known = ['INVALID_QR', 'CLASS_NOT_FOUND', 'STUDENT_NOT_FOUND', 'UNAUTHORIZED', 'NETWORK', 'VALIDATION_ERROR'].map(errorMessage);
     expect(new Set(known).size).toBe(6);
-    expect(errorMessage('WHATEVER')).toMatch(/something went wrong/i);
+    expect(errorMessage('WHATEVER')).toMatch(/algo salió mal/i);
   });
 });
 describe('safeRedirect', () => {

@@ -57,27 +57,27 @@ onUnmounted(() => {
 
 <template>
   <div class="row">
-    <span v-if="name">Hi, {{ name }}</span>
-    <button class="btn btn-secondary" type="button" @click="logout">Log out</button>
+    <span v-if="name">Hola, {{ name }}</span>
+    <button class="btn btn-secondary" type="button" @click="logout">Cerrar sesión</button>
   </div>
 
-  <p v-if="loading"><span class="spinner" aria-hidden="true"></span> Loading classes…</p>
+  <p v-if="loading"><span class="spinner" aria-hidden="true"></span> Cargando clases…</p>
   <div v-else-if="failed" class="card">
-    <p class="error">Could not load classes.</p>
-    <button class="btn" type="button" @click="loadClasses">Retry</button>
+    <p class="error">No se pudieron cargar las clases.</p>
+    <button class="btn" type="button" @click="loadClasses">Reintentar</button>
   </div>
-  <p v-else-if="!classes.length">No classes available.</p>
+  <p v-else-if="!classes.length">No hay clases disponibles.</p>
   <div v-else class="grid">
     <button v-for="c in classes" :key="c.code" class="btn" type="button" @click="openQr(c)">{{ c.name }}</button>
   </div>
 
   <section class="card">
-    <h2>Your registrations</h2>
-    <p v-if="!registrations.length">No registrations yet</p>
+    <h2>Tus registros</h2>
+    <p v-if="!registrations.length">Aún no tienes registros</p>
     <ul v-else class="list">
       <li v-for="r in registrations" :key="r.id">
         <strong>{{ r.className }}</strong>
-        <span>{{ new Date(r.registeredAt).toLocaleString() }}</span>
+        <span>{{ new Date(r.registeredAt).toLocaleString('es-MX') }}</span>
       </li>
     </ul>
   </section>
@@ -87,15 +87,15 @@ onUnmounted(() => {
       <h2>{{ selected.name }}</h2>
       <div class="qr-box">
         <span v-if="qrState === 'loading'" class="spinner" aria-hidden="true"></span>
-        <img v-show="qrState === 'ready'" :src="qrSrc" :alt="`QR code for ${selected.name}`" class="qr"
+        <img v-show="qrState === 'ready'" :src="qrSrc" :alt="`Código QR de ${selected.name}`" class="qr"
              @load="qrState = 'ready'" @error="qrState = 'error'" />
         <div v-if="qrState === 'error'">
-          <p class="error">Could not load the QR code.</p>
-          <button class="btn" type="button" @click="retryQr">Retry</button>
+          <p class="error">No se pudo cargar el código QR.</p>
+          <button class="btn" type="button" @click="retryQr">Reintentar</button>
         </div>
       </div>
-      <p>Scan this QR with your phone camera to register</p>
-      <button class="btn btn-secondary" type="button" @click="selected = null">Close</button>
+      <p>Escanea este QR con la cámara de tu teléfono para registrarte</p>
+      <button class="btn btn-secondary" type="button" @click="selected = null">Cerrar</button>
     </div>
   </div>
 </template>

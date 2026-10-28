@@ -5,16 +5,16 @@ export function parseScanQuery(q: Record<string, unknown>): { classCode: string;
 }
 
 const MESSAGES: Record<string, string> = {
-  INVALID_QR: 'This QR code is not valid. Scan a class QR code again.',
-  CLASS_NOT_FOUND: 'That class does not exist.',
-  STUDENT_NOT_FOUND: 'We could not find that student ID.',
-  UNAUTHORIZED: 'Your session has expired. Please log in again.',
-  NETWORK: 'Cannot reach the server. Check your connection and try again.',
-  VALIDATION_ERROR: 'Please check the information you entered.',
+  INVALID_QR: 'Este código QR no es válido. Escanea de nuevo el código QR de una clase.',
+  CLASS_NOT_FOUND: 'Esa clase no existe.',
+  STUDENT_NOT_FOUND: 'No encontramos esa matrícula.',
+  UNAUTHORIZED: 'Tu sesión expiró. Inicia sesión de nuevo.',
+  NETWORK: 'No se pudo conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.',
+  VALIDATION_ERROR: 'Revisa la información que ingresaste.',
 };
 
 export function errorMessage(code: string): string {
-  return MESSAGES[code] ?? 'Something went wrong. Please try again.';
+  return MESSAGES[code] ?? 'Algo salió mal. Inténtalo de nuevo.';
 }
 
 export function safeRedirect(raw: unknown): string | null {

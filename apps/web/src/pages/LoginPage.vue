@@ -30,11 +30,11 @@ async function submit() {
 
 <template>
   <form class="card" @submit.prevent="submit">
-    <label for="student-id">Insert your student ID</label>
+    <label for="student-id">Ingresa tu matrícula</label>
     <input id="student-id" v-model="studentId" class="input" autofocus inputmode="text"
            autocapitalize="off" autocomplete="off" />
     <button class="btn" type="submit" :disabled="!studentId.trim() || loading">
-      {{ loading ? 'Logging in…' : 'Log in' }}
+      {{ loading ? 'Iniciando sesión…' : 'Iniciar sesión' }}
     </button>
     <p v-if="error" class="error" role="alert">{{ error }}</p>
   </form>

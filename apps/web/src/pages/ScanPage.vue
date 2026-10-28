@@ -31,17 +31,17 @@ onMounted(run);
 
 <template>
   <section class="card">
-    <p v-if="missing" class="error">This link is missing its QR data. Scan a class QR code again.</p>
-    <p v-else-if="state === 'loading'"><span class="spinner" aria-hidden="true"></span> Registering…</p>
+    <p v-if="missing" class="error">Este enlace no contiene los datos del QR. Escanea de nuevo el código QR de una clase.</p>
+    <p v-else-if="state === 'loading'"><span class="spinner" aria-hidden="true"></span> Registrando…</p>
     <template v-else-if="state === 'success' && registration">
-      <p class="success">Registered ✅</p>
+      <p class="success">Registrado ✓</p>
       <p><strong>{{ registration.className }}</strong></p>
-      <p>{{ new Date(registration.registeredAt).toLocaleString() }}</p>
+      <p>{{ new Date(registration.registeredAt).toLocaleString('es-MX') }}</p>
     </template>
     <template v-else>
       <p class="error" role="alert">{{ error }}</p>
-      <button class="btn" type="button" @click="run">Try again</button>
+      <button class="btn" type="button" @click="run">Intentar de nuevo</button>
     </template>
-    <RouterLink class="link" to="/">Back to classes</RouterLink>
+    <RouterLink class="link" to="/">Volver a las clases</RouterLink>
   </section>
 </template>
