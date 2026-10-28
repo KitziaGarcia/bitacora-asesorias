@@ -1,0 +1,10 @@
+{
+  "name": "bitacora-asesorias",
+  "private": true,
+  "workspaces": ["apps/*", "packages/*"],
+  "scripts": {
+    "dev:api": "npm -w apps/api run dev",
+    "dev:web": "npm -w apps/web run dev",
+    "test": "npm -ws --if-present run test"
+  }
+}
