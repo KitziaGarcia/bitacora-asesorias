@@ -12,6 +12,15 @@ const register = (id: string, body: object) => request(app).post('/api/registrat
 beforeEach(seedTestData);
 
 describe('GET /api/classes and QR', () => {
+  it('provides a working signed link for laptop registration', async () => {
+    const link = await request(app).get('/api/classes/oop/qr?format=json');
+    expect(link.status).toBe(200);
+    const url = new URL(link.body.url);
+    expect(url.pathname).toBe('/scan');
+    const result = await register('S1', { classCode: url.searchParams.get('c'), sig: url.searchParams.get('sig') });
+    expect(result.status).toBe(201);
+    expect(result.body.registration.studentId).toBe('S1');
+  });
   it('lists classes from the database', async () => {
     const res = await request(app).get('/api/classes');
     expect(res.body.items.map((c: any) => c.code).sort()).toEqual(['ai', 'iot', 'oop']);
@@ -84,6 +93,16 @@ describe('POST /api/registrations', () => {
 });
 
 describe('GET /api/registrations', () => {
+  it('demo teacher portal lists registrations from all students without login', async () => {
+    await register('S1', { classCode: 'oop', sig: signClass('oop') });
+    await register('S2', { classCode: 'ai', sig: signClass('ai') });
+    const res = await request(app).get('/api/teacher/registrations');
+    expect(res.status).toBe(200);
+    expect(res.headers['cache-control']).toBe('no-store');
+    expect(res.body.items).toHaveLength(2);
+    expect(res.body.items.map((r: any) => r.studentId).sort()).toEqual(['S1', 'S2']);
+    expect(res.body.items.every((r: any) => r.className && r.studentName && r.registeredAt)).toBe(true);
+  });
   it("lists only the caller's registrations, newest first", async () => {
     await prisma.registration.create({ data: { studentId: 'S1', classCode: 'oop', registeredAt: new Date(Date.now() - 600_000) } });
     await prisma.registration.create({ data: { studentId: 'S1', classCode: 'ai', registeredAt: new Date(Date.now() - 300_000) } });

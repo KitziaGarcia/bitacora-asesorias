@@ -37,6 +37,10 @@ Si cambias `apps/api/.env`, **reinicia la API** (Ctrl+C en su terminal y vuelve 
 
 ### Probar el flujo sin teléfono
 
+En la pantalla de materias, abre un QR y pulsa **Probar desde esta laptop**. Se registra una visita real con la matrícula de la sesión actual. Vuelve a las materias para verla en **Tus registros**. Repetir la misma materia en menos de dos minutos devuelve el registro existente.
+
+La selección de portales está en `/inicio`. El portal de profesores (`/profesores`) es un demo con acceso directo a los registros de todos los alumnos, búsqueda y actualización cada 5 segundos. Su API es `GET /api/teacher/registrations`, sin autenticación docente por ahora.
+
 1. Inicia sesión, haz clic en una clase y aparece el código QR.
 2. Haz clic derecho sobre el QR, abre su enlace (se ve como `http://localhost:5173/scan?c=oop&sig=...`) en una pestaña nueva o en una ventana privada e inicia sesión si te lo pide. Debes ver "✓ Registrado".
 3. En la primera pestaña, la nueva fila aparece en "Tus registros" en unos 3 segundos.

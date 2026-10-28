@@ -1,27 +1,12 @@
 <script setup lang="ts">
-import { ref } from 'vue';
-import { applyTheme, initialTheme, type Theme } from './lib/theme';
-
-const theme = ref<Theme>(initialTheme());
-applyTheme(theme.value);
-
-function toggleTheme() {
-  theme.value = theme.value === 'dark' ? 'light' : 'dark';
-  applyTheme(theme.value);
-}
+import AppIcon from './components/AppIcon.vue';
 </script>
-
 <template>
   <header class="app-header">
-    <h1>Registro de clases</h1>
-    <button
-      type="button"
-      class="theme-toggle"
-      :aria-label="theme === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'"
-      @click="toggleTheme"
-    >
-      {{ theme === 'dark' ? 'Claro' : 'Oscuro' }}
-    </button>
+    <RouterLink to="/inicio" class="brand"><img class="brand-crest" src="/uabc-escudo.png" alt="Escudo de la UABC" width="54" height="74" /><span><strong>Universidad Autónoma de Baja California</strong><small>Bitácora de asesorías académicas</small></span></RouterLink>
+    <nav class="header-actions" aria-label="Navegación principal"><RouterLink to="/inicio"><AppIcon name="home" /> Inicio</RouterLink>
+    </nav>
   </header>
   <main class="container"><RouterView /></main>
+  <footer class="app-footer"><span>UABC · Asesorías académicas</span><span>Por la realización plena del ser</span></footer>
 </template>

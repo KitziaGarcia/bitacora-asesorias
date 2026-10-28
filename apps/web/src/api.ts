@@ -50,3 +50,7 @@ export const getRegistrations = async (): Promise<RegistrationDto[]> =>
   (await request<{ items: RegistrationDto[] }>('/registrations')).items;
 
 export const qrUrl = (code: string) => `/api/classes/${encodeURIComponent(code)}/qr`;
+export const getScanLink = (code: string) => request<{ url: string }>(`/classes/${encodeURIComponent(code)}/qr?format=json`);
+export type TeacherRegistration = RegistrationDto & { studentName: string };
+export const getTeacherRegistrations = async (): Promise<TeacherRegistration[]> =>
+  (await request<{ items: TeacherRegistration[] }>('/teacher/registrations')).items;

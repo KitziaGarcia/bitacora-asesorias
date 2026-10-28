@@ -3,6 +3,7 @@ import cors from 'cors';
 import { authRouter } from './routes/auth';
 import { classesRouter } from './routes/classes';
 import { registrationsRouter } from './routes/registrations';
+import { teachersRouter } from './routes/teachers';
 import { notFound, errorHandler } from './errors';
 
 export function createApp(): Express {
@@ -12,6 +13,7 @@ export function createApp(): Express {
   app.use('/api', authRouter);
   app.use('/api', classesRouter);
   app.use('/api', registrationsRouter);
+  app.use('/api', teachersRouter);
   app.use(notFound);
   app.use(errorHandler);
   return app;

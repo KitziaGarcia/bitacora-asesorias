@@ -31,7 +31,9 @@ classesRouter.get('/classes/:code/qr', async (req, res, next) => {
     const cls = await prisma.class.findUnique({ where: { code: req.params.code } });
     if (!cls) throw new HttpError(404, 'CLASS_NOT_FOUND', 'Class not found');
     const url = buildScanUrl(cls.code);
-    if (req.query.format === 'png') {
+    if (req.query.format === 'json') {
+      res.json({ url });
+    } else if (req.query.format === 'png') {
       const buf = await QRCode.toBuffer(url, { width: 512, margin: 2 });
       res.type('png').send(buf);
     } else {
