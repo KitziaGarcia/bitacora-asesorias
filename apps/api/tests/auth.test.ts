@@ -17,11 +17,30 @@ describe('POST /api/login', () => {
     const res = await request(app).post('/api/login').send({ studentId: '  S2 ' });
     expect(res.body.student.studentId).toBe('S2');
   });
-  it('unknown id → 404 STUDENT_NOT_FOUND and no token', async () => {
-    const res = await request(app).post('/api/login').send({ studentId: 'NOPE' });
-    expect(res.status).toBe(404);
-    expect(res.body.error.code).toBe('STUDENT_NOT_FOUND');
-    expect(res.body.token).toBeUndefined();
+  it('an unknown id is created on first login (name defaults to the id) and gets a token', async () => {
+    const res = await request(app).post('/api/login').send({ studentId: '1234567' });
+    expect(res.status).toBe(200);
+    expect(res.body.token).toBeTruthy();
+    expect(res.body.student).toEqual({ studentId: '1234567', name: '1234567' });
+    const { prisma } = await import('../src/db');
+    expect(await prisma.student.count({ where: { id: '1234567' } })).toBe(1);
+  });
+  it('logging in again with the same id does not duplicate or rename the student', async () => {
+    await request(app).post('/api/login').send({ studentId: '1234567' });
+    const { prisma } = await import('../src/db');
+    await prisma.student.update({ where: { id: '1234567' }, data: { name: 'Real Name' } });
+    const res = await request(app).post('/api/login').send({ studentId: '1234567' });
+    expect(res.body.student.name).toBe('Real Name');
+    expect(await prisma.student.count({ where: { id: '1234567' } })).toBe(1);
+  });
+  it('two simultaneous first logins with a new id both succeed with one row', async () => {
+    const [a, b] = await Promise.all([
+      request(app).post('/api/login').send({ studentId: '7654321' }),
+      request(app).post('/api/login').send({ studentId: '7654321' }),
+    ]);
+    expect([a.status, b.status]).toEqual([200, 200]);
+    const { prisma } = await import('../src/db');
+    expect(await prisma.student.count({ where: { id: '7654321' } })).toBe(1);
   });
   it('blank or missing id → 400 VALIDATION_ERROR', async () => {
     expect((await request(app).post('/api/login').send({ studentId: '   ' })).body.error.code).toBe('VALIDATION_ERROR');

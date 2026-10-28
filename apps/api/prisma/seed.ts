@@ -5,7 +5,7 @@ import { seed } from './seedData';
 const db = new PrismaClient();
 seed(db)
   .then(async () => {
-    console.log(`Seeded ${await db.class.count()} classes, ${await db.student.count()} students`);
+    console.log(`Seeded ${await db.class.count()} classes`);
     await db.$disconnect();
     process.exit(0);
   })
