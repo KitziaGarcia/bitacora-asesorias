@@ -2,7 +2,7 @@
 
 A student logs in with their school ID, picks a class, and a QR code for that class is shown. Another student (or the same one on a phone) scans it with the phone camera, lands on the app, and the visit is registered against their ID. They can see their registrations in the app.
 
-**Included:** student-ID login (JWT), preset class list, per-class signed QR, scan landing page, "Your registrations" list, 2-minute duplicate guard (re-scanning the same class within 2 minutes returns the existing row).
+**Included:** student-ID login (JWT), preset class list, per-class signed QR, scan landing page, "Tus registros" list, 2-minute duplicate guard (re-scanning the same class within 2 minutes returns the existing row).
 **Not included:** the teacher side, real authentication, time-limited QR codes.
 
 Monorepo layout:
@@ -31,7 +31,7 @@ Environment variables (`apps/api/.env`):
 
 **Change `JWT_SECRET` and `QR_SECRET` from `change-me` before sharing the app.** If they are unset, the code falls back to the guessable default `dev-secret`.
 
-`db:setup` creates the SQLite file `apps/api/prisma/dev.db`, applies the schema and seeds classes and students. It is idempotent (upserts only, never deletes), so run it as often as you like.
+`db:setup` creates the SQLite file `apps/api/prisma/dev.db`, applies the schema and seeds the preset classes (no students: they are created at login). It is idempotent (upserts only, never deletes), so run it as often as you like.
 
 ## Run
 
@@ -44,26 +44,19 @@ npm run dev:web   # http://localhost:5173 (proxies /api to :3000)
 
 Tests (all workspaces): `npm test`
 
-## Demo student IDs
+## Student IDs
 
-From `apps/api/prisma/students.ts`:
-
-| ID | Name |
-| --- | --- |
-| A01000001 | Ana Martinez |
-| A01000002 | Luis Hernandez |
-| A01000003 | Sofia Ramirez |
-| A01000004 | Carlos Lopez |
-| A01000005 | Valeria Torres |
+There are no seeded students. The first time someone logs in with a student ID (7 digits at the school), that ID is added to the `Student` table and every later login with it reuses the same row. Because no name is known yet, the name defaults to the ID. Nothing checks the format, so a typo in the ID creates a new student.
 
 Preset classes (`packages/shared/src/index.ts`): `oop`, `iot`, `embedded-systems`, `advanced-electronics`, `software-engineering`, `ai`.
 
 ## Sharing data with teammates
 
-Students live in `apps/api/prisma/students.ts` and classes in `packages/shared/src/index.ts`. The database file `apps/api/prisma/dev.db` is **not** committed.
+Classes live in `packages/shared/src/index.ts`. Students are not in the code: they are created in the database at login. The database file `apps/api/prisma/dev.db` is **not** committed, so each developer has their own students and registrations.
 
-1. Add a student or class to the file above and commit it.
+1. To add a class, edit `CLASSES` in `packages/shared/src/index.ts` and commit it.
 2. A teammate runs `git pull && npm install && npm run db:setup` and sees it (the seed only upserts, never deletes).
+3. A teammate who wants the same students just logs in with those IDs on their own machine.
 
 The schema is `apps/api/prisma/schema.prisma`. The teacher side extends it: new models and migrations go there, so coordinate edits to that file.
 
@@ -83,14 +76,14 @@ All under `/api`. Errors use the envelope `{ "error": { "code", "message" } }`.
 
 | Method | Path | Auth | Description / statuses |
 | --- | --- | --- | --- |
-| POST | `/login` | none | Body `{ studentId }`. 200 `{ token, student }`; 400 `VALIDATION_ERROR`; 404 `STUDENT_NOT_FOUND` |
+| POST | `/login` | none | Body `{ studentId }`. Creates the student if the ID is new. 200 `{ token, student }`; 400 `VALIDATION_ERROR` |
 | GET | `/me` | Bearer JWT | 200 `{ student }`; `UNAUTHORIZED` (401) if missing/invalid token |
 | GET | `/classes` | none | 200 `{ items: [{ code, name }] }` |
 | GET | `/classes/:code/qr` | none | SVG QR (`?format=png` for PNG); 404 `CLASS_NOT_FOUND` |
 | POST | `/registrations` | Bearer JWT | Body `{ classCode, sig }`. 201 created; 200 duplicate within 2 min (existing row); 400 `VALIDATION_ERROR` / `INVALID_QR`; 404 `CLASS_NOT_FOUND`; 401 `UNAUTHORIZED` |
 | GET | `/registrations` | Bearer JWT | 200 `{ items }`, only the caller's rows, newest first; 401 `UNAUTHORIZED` |
 
-Error codes: `VALIDATION_ERROR`, `INVALID_QR`, `UNAUTHORIZED`, `STUDENT_NOT_FOUND`, `CLASS_NOT_FOUND`, `NOT_FOUND` (unknown route), `INTERNAL`.
+Error codes: `VALIDATION_ERROR`, `INVALID_QR`, `UNAUTHORIZED`, `CLASS_NOT_FOUND`, `NOT_FOUND` (unknown route), `INTERNAL`.
 
 Web routes: `/login`, `/` (classes), `/scan?c=<code>&sig=<sig>` (scan landing).
 
@@ -104,7 +97,7 @@ Web routes: `/login`, `/` (classes), `/scan?c=<code>&sig=<sig>` (scan landing).
 
 ## Status
 
-The UI pages have been verified only by unit tests, type-check/build, and `curl` through the Vite proxy. They have **not** yet been exercised in a real browser or on a phone. Manual check to run: login -> click a class -> QR appears -> scan with the phone -> "Registered" shown -> the row appears under "Your registrations"; then edit the `sig` in the scanned link and confirm an error is shown.
+The UI pages have been verified only by unit tests, type-check/build, and `curl` through the Vite proxy. They have **not** yet been exercised in a real browser or on a phone. Manual check to run: login -> click a class -> QR appears -> scan with the phone -> "✓ Registrado" shown -> the row appears under "Tus registros"; then edit the `sig` in the scanned link and confirm an error is shown.
 
 ## Notes
 
