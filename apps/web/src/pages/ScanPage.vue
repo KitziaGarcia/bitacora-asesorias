@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import type { RegistrationDto } from '@bitacora/shared';
 import { registerScan, ApiError } from '../api';
 import { errorMessage, parseScanQuery } from '../lib/scan';
 
 const route = useRoute();
+const router = useRouter();
 const state = ref<'loading' | 'success' | 'error'>('loading');
 const missing = ref(false);
 const registration = ref<RegistrationDto | null>(null);
@@ -18,6 +19,8 @@ async function run() {
   try {
     registration.value = await registerScan(q.classCode, q.sig);
     state.value = 'success';
+    // drop the one-time QR params so reload/Back does not re-register
+    router.replace({ path: '/scan', query: {} }).catch(() => {});
   } catch (e) {
     error.value = errorMessage(e instanceof ApiError ? e.code : 'INTERNAL');
     state.value = 'error';

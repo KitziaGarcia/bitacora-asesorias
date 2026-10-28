@@ -19,6 +19,18 @@ cp apps/api/.env.example apps/api/.env
 npm run db:setup
 ```
 
+Environment variables (`apps/api/.env`):
+
+| Variable | Purpose |
+| --- | --- |
+| `PORT` | API port (default 3000) |
+| `DATABASE_URL` | SQLite file URL |
+| `JWT_SECRET` | Signs login tokens |
+| `QR_SECRET` | Signs the per-class QR links |
+| `APP_BASE_URL` | Base URL encoded in the QR (the web app's address) |
+
+**Change `JWT_SECRET` and `QR_SECRET` from `change-me` before sharing the app.** If they are unset, the code falls back to the guessable default `dev-secret`.
+
 `db:setup` creates the SQLite file `apps/api/prisma/dev.db`, applies the schema and seeds classes and students. It is idempotent (upserts only, never deletes), so run it as often as you like.
 
 ## Run
@@ -61,9 +73,9 @@ The schema is `apps/api/prisma/schema.prisma`. The teacher side extends it: new 
 2. Find the computer's LAN IP (`ipconfig` on Windows).
 3. In `apps/api/.env` set `APP_BASE_URL=http://<LAN-IP>:5173` and restart the API (the QR encodes this URL).
 4. On the computer open `http://<LAN-IP>:5173`, log in, and click a class to show its QR.
-5. Scan it with the phone's native camera app. The first time, enter your student ID on the phone (the phone has its own browser session).
+5. Scan it with the phone's native camera app. The first time, enter your student ID on the phone (the phone has its own browser session). The phone only needs port 5173: the Vite `/api` proxy forwards API calls to the API on the computer.
 
-If the phone cannot connect, allow Node/ports 5173 and 3000 through the Windows firewall.
+If the phone cannot connect, allow Node/port 5173 through the Windows firewall.
 
 ## Endpoints
 
@@ -72,11 +84,13 @@ All under `/api`. Errors use the envelope `{ "error": { "code", "message" } }`.
 | Method | Path | Auth | Description / statuses |
 | --- | --- | --- | --- |
 | POST | `/login` | none | Body `{ studentId }`. 200 `{ token, student }`; 400 `VALIDATION_ERROR`; 404 `STUDENT_NOT_FOUND` |
-| GET | `/me` | Bearer JWT | 200 `{ student }`; 401 if missing/invalid token |
+| GET | `/me` | Bearer JWT | 200 `{ student }`; `UNAUTHORIZED` (401) if missing/invalid token |
 | GET | `/classes` | none | 200 `{ items: [{ code, name }] }` |
 | GET | `/classes/:code/qr` | none | SVG QR (`?format=png` for PNG); 404 `CLASS_NOT_FOUND` |
-| POST | `/registrations` | Bearer JWT | Body `{ classCode, sig }`. 201 created; 200 duplicate within 2 min (existing row); 400 `VALIDATION_ERROR` / `INVALID_QR`; 404 `CLASS_NOT_FOUND`; 401 |
-| GET | `/registrations` | Bearer JWT | 200 `{ items }`, only the caller's rows, newest first; 401 |
+| POST | `/registrations` | Bearer JWT | Body `{ classCode, sig }`. 201 created; 200 duplicate within 2 min (existing row); 400 `VALIDATION_ERROR` / `INVALID_QR`; 404 `CLASS_NOT_FOUND`; 401 `UNAUTHORIZED` |
+| GET | `/registrations` | Bearer JWT | 200 `{ items }`, only the caller's rows, newest first; 401 `UNAUTHORIZED` |
+
+Error codes: `VALIDATION_ERROR`, `INVALID_QR`, `UNAUTHORIZED`, `STUDENT_NOT_FOUND`, `CLASS_NOT_FOUND`, `NOT_FOUND` (unknown route), `INTERNAL`.
 
 Web routes: `/login`, `/` (classes), `/scan?c=<code>&sig=<sig>` (scan landing).
 
@@ -84,6 +98,8 @@ Web routes: `/login`, `/` (classes), `/scan?c=<code>&sig=<sig>` (scan landing).
 
 - Login by student ID alone is **not secure**: anyone who knows an ID can sign in as that student.
 - The QR image endpoint is public and the QR is not time-limited (the signature only proves the link was issued by this server for that class).
+- **Registrations are self-reported, not proof of presence.** The QR signature never changes and the QR image is public, so any logged-in student can register for any class from anywhere. Treat a registration as proof of attendance only once the QR is time-limited or shown only by the teacher (relevant for the teacher-side work).
+- The double-scan lock is per-process: run a single API instance.
 - One JWT per browser (stored locally); logging in as someone else on the same browser replaces it.
 
 ## Status
@@ -93,5 +109,5 @@ The UI pages have been verified only by unit tests, type-check/build, and `curl`
 ## Notes
 
 - `apps/web` pins TypeScript `~5.9` and type-checks through `apps/web/typecheck.cjs`, because the repo root uses TypeScript 7, which breaks `vue-tsc`. Use `npm -w apps/web run build` (it runs the type-check first).
-- The API test database is `apps/api/prisma/test.db`; it is reset by deleting that file, never `dev.db`.
+- The API test database is `apps/api/prisma/test.db`; it is reset automatically by the test setup (no manual deletion needed), and `dev.db` is never touched.
 - On Windows, `npm run db:setup` may print an `EPERM ... query_engine-windows.dll.node` rename error from Prisma client generation if another Node process (e.g. `dev:api`) is running. The schema push and seed still complete; stop the dev servers if you need to regenerate the client.

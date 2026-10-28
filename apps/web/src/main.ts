@@ -7,6 +7,7 @@ import './style.css';
 
 setUnauthorizedHandler(() => {
   setToken(null);
+  if (router.currentRoute.value.path === '/login') return;
   router.push({ path: '/login', query: { redirect: router.currentRoute.value.fullPath } });
 });
 

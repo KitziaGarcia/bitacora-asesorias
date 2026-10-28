@@ -8,6 +8,7 @@ const secret = () => process.env.JWT_SECRET ?? 'dev-secret';
 export function signToken(studentId: string): string {
   return jwt.sign({}, secret(), {
     subject: studentId,
+    algorithm: 'HS256',
     expiresIn: (process.env.JWT_EXPIRES_IN ?? '12h') as jwt.SignOptions['expiresIn'],
   });
 }
@@ -20,7 +21,7 @@ export const authenticate: RequestHandler = async (req, _res, next) => {
     if (!match) throw unauthorized();
     let sub: string | undefined;
     try {
-      sub = jwt.verify(match[1], secret()).sub as string | undefined;
+      sub = jwt.verify(match[1], secret(), { algorithms: ['HS256'] }).sub as string | undefined;
     } catch {
       throw unauthorized();
     }
