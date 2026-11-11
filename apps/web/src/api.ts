@@ -1,5 +1,6 @@
-import type { ClassInfo, RegistrationDto, StudentDto } from '@bitacora/shared';
+import type { ClassInfo, RegistrationDto, StudentDto, StaffInfo, StaffRole, TeacherInfo } from '@bitacora/shared';
 import { getToken } from './lib/token';
+import { getStaffSession } from './lib/staff-session';
 
 export class ApiError extends Error {
   constructor(public code: string, message: string) {
@@ -11,9 +12,9 @@ export class ApiError extends Error {
 let onUnauthorized: () => void = () => {};
 export function setUnauthorizedHandler(fn: () => void): void { onUnauthorized = fn; }
 
-async function request<T>(path: string, init: RequestInit = {}, opts: { skip401?: boolean } = {}): Promise<T> {
+async function request<T>(path: string, init: RequestInit = {}, opts: { skip401?: boolean; token?: string | null } = {}): Promise<T> {
   const headers = new Headers(init.headers);
-  const token = getToken();
+  const token = opts.token === undefined ? getToken() : opts.token;
   if (token) headers.set('Authorization', `Bearer ${token}`);
   if (init.body) headers.set('Content-Type', 'application/json');
   let res: Response;
@@ -42,15 +43,24 @@ export const getMe = async (): Promise<StudentDto> => (await request<{ student: 
 export const getClasses = async (): Promise<ClassInfo[]> =>
   (await request<{ items: ClassInfo[] }>('/classes')).items;
 
-export const registerScan = async (classCode: string, sig: string): Promise<RegistrationDto> =>
+export const registerScan = async (classCode: string, sig: string, assignmentId: string): Promise<RegistrationDto> =>
   (await request<{ registration: RegistrationDto }>(
-    '/registrations', { method: 'POST', body: JSON.stringify({ classCode, sig }) })).registration;
+    '/registrations', { method: 'POST', body: JSON.stringify({ classCode, sig, assignmentId }) })).registration;
 
 export const getRegistrations = async (): Promise<RegistrationDto[]> =>
   (await request<{ items: RegistrationDto[] }>('/registrations')).items;
 
-export const qrUrl = (code: string) => `/api/classes/${encodeURIComponent(code)}/qr`;
-export const getScanLink = (code: string) => request<{ url: string }>(`/classes/${encodeURIComponent(code)}/qr?format=json`);
+export const getTeachers = async () => (await request<{ items: TeacherInfo[] }>('/teachers')).items;
+export const qrUrl = (code: string, assignmentId: string) =>
+  `/api/classes/${encodeURIComponent(code)}/qr?a=${encodeURIComponent(assignmentId)}`;
+export const getScanLink = (code: string, assignmentId: string) =>
+  request<{ url: string }>(`${qrUrl(code, assignmentId).slice(4)}&format=json`);
 export type TeacherRegistration = RegistrationDto & { studentName: string };
-export const getTeacherRegistrations = async (): Promise<TeacherRegistration[]> =>
-  (await request<{ items: TeacherRegistration[] }>('/teacher/registrations')).items;
+export const staffLogin = (role: StaffRole, username: string, password: string) =>
+  request<{ token: string; staff: StaffInfo }>('/staff/login', {
+    method: 'POST', body: JSON.stringify({ role, username, password }),
+  }, { token: null, skip401: true });
+export const getStaffRegistrations = async (role: StaffRole): Promise<TeacherRegistration[]> =>
+  (await request<{ items: TeacherRegistration[] }>(`/${role}/registrations`, {}, {
+    token: getStaffSession(role)?.token ?? null, skip401: true,
+  })).items;

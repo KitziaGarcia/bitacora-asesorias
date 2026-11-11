@@ -37,19 +37,15 @@ Si cambias `apps/api/.env`, **reinicia la API** (Ctrl+C en su terminal y vuelve 
 
 ### Probar el flujo sin teléfono
 
-En la pantalla de materias, abre un QR y pulsa **Probar desde esta laptop**. Se registra una visita real con la matrícula de la sesión actual. Vuelve a las materias para verla en **Tus registros**. Repetir la misma materia en menos de dos minutos devuelve el registro existente.
+Elige un maestro y una materia. Abre su QR y pulsa **Probar desde esta laptop**. La visita aparece en **Tus registros**. Repetir la misma asignación en menos de dos minutos devuelve el registro existente.
 
-La selección de portales está en `/inicio`. El portal de profesores (`/profesores`) es un demo con acceso directo a los registros de todos los alumnos, búsqueda y actualización cada 5 segundos. Su API es `GET /api/teacher/registrations`, sin autenticación docente por ahora.
-
-1. Inicia sesión, haz clic en una clase y aparece el código QR.
-2. Haz clic derecho sobre el QR, abre su enlace (se ve como `http://localhost:5173/scan?c=oop&sig=...`) en una pestaña nueva o en una ventana privada e inicia sesión si te lo pide. Debes ver "✓ Registrado".
-3. En la primera pestaña, la nueva fila aparece en "Tus registros" en unos 3 segundos.
+Consulta [BITACORA.md](BITACORA.md) para las cuentas de demo y la prueba de los tres roles.
 
 ### Probar el flujo con teléfono
 
 1. Conecta el teléfono y la computadora a la misma red Wi-Fi y busca la dirección IPv4 de la computadora (`ipconfig` en Windows). Más abajo la llamamos `<IP-DE-TU-PC>`; usa la dirección real que te muestre `ipconfig`, no un ejemplo.
 2. En `apps/api/.env` escribe `APP_BASE_URL=http://<IP-DE-TU-PC>:5173` y **reinicia la API**. Los códigos QR solo usan la nueva dirección después de reiniciar.
-3. Abre `http://<IP-DE-TU-PC>:5173` en la computadora, inicia sesión y haz clic en una clase.
+3. Abre `http://<IP-DE-TU-PC>:5173` en la computadora, inicia sesión, elige al maestro y abre el QR de una materia.
 4. Escanea el QR con la aplicación de cámara normal del teléfono. El teléfono abre el enlace, te pide la matrícula la primera vez y luego muestra "✓ Registrado".
 
 El teléfono solo necesita el puerto 5173, porque el servidor web redirige `/api` a la API. Si el teléfono no logra conectarse, permite Node.js en el Firewall de Windows para redes privadas (o agrega una regla de entrada para el puerto 5173).
@@ -72,7 +68,7 @@ npm -w apps/web run build       # revisión de tipos + compilación de producci�
 El archivo de la base de datos no se sube a git. Las clases se comparten mediante código; los estudiantes se crean al iniciar sesión, por lo que cada desarrollador tiene los suyos:
 
 - Clases: edita `CLASSES` en `packages/shared/src/index.ts`.
-- Esquema: `apps/api/prisma/schema.prisma`. El lado del profesor está pensado para extender este archivo, así que coordinen los cambios.
+- Esquema: `apps/api/prisma/schema.prisma`. Incluye cuentas de personal y asignaciones entre maestros y materias.
 
 Después de que subas un cambio, un compañero ejecuta:
 
@@ -105,4 +101,4 @@ Para empezar de cero con una base de datos vacía, detén los servidores, borra 
 
 ## Limitaciones conocidas
 
-El inicio de sesión usa solo la matrícula (sin contraseña), la imagen del QR es pública y nunca caduca, y los registros son autodeclarados: cualquier estudiante con sesión iniciada puede registrarse en cualquier clase, por lo que no prueban presencia. El candado contra escaneos duplicados funciona por proceso, así que ejecuta una sola instancia de la API. Consulta `README.md` para más detalles.
+El inicio de sesión del estudiante usa solo la matrícula (sin contraseña), la imagen del QR es pública y nunca caduca, y los registros son autodeclarados: cualquier estudiante con sesión iniciada puede registrarse en cualquier clase, por lo que no prueban presencia. El candado contra escaneos duplicados funciona por proceso, así que ejecuta una sola instancia de la API. Consulta `README.md` para más detalles.

@@ -2,6 +2,8 @@ import { prisma } from '../src/db';
 
 export async function resetDb() {
   await prisma.registration.deleteMany();
+  await prisma.teachingAssignment.deleteMany();
+  await prisma.staff.deleteMany();
   await prisma.student.deleteMany();
   await prisma.class.deleteMany();
 }

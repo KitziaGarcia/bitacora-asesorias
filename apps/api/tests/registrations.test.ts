@@ -5,19 +5,38 @@ import { prisma } from '../src/db';
 import { signClass } from '../src/qr';
 import { signToken } from '../src/auth';
 import { seedTestData } from './helpers';
+import { hashPassword } from '../src/staff-auth';
 
 const app = createApp();
 const auth = (id: string) => ({ Authorization: `Bearer ${signToken(id)}` });
 const register = (id: string, body: object) => request(app).post('/api/registrations').set(auth(id)).send(body);
-beforeEach(seedTestData);
+const password = 'test-password';
+const passwordHash = hashPassword(password);
+const signed = (classCode: string, assignmentId = classCode + '-gael') =>
+  ({ classCode, assignmentId, sig: signClass(classCode, assignmentId) });
+const staffLogin = (username: string, role: 'teacher' | 'admin') =>
+  request(app).post('/api/staff/login').send({ username, password, role });
+beforeEach(async () => {
+  await seedTestData();
+  await prisma.staff.createMany({ data: [
+    { id: 'gael', username: 'gael', name: 'Gael', role: 'teacher', passwordHash },
+    { id: 'diego', username: 'diego', name: 'Diego', role: 'teacher', passwordHash },
+    { id: 'admin', username: 'admin', name: 'Administrador', role: 'admin', passwordHash },
+  ] });
+  await prisma.teachingAssignment.createMany({ data: [
+    { id: 'oop-gael', classCode: 'oop', teacherId: 'gael' },
+    { id: 'oop-diego', classCode: 'oop', teacherId: 'diego' },
+    { id: 'ai-gael', classCode: 'ai', teacherId: 'gael' },
+  ] });
+});
 
 describe('GET /api/classes and QR', () => {
   it('provides a working signed link for laptop registration', async () => {
-    const link = await request(app).get('/api/classes/oop/qr?format=json');
+    const link = await request(app).get('/api/classes/oop/qr?a=oop-gael&format=json');
     expect(link.status).toBe(200);
     const url = new URL(link.body.url);
     expect(url.pathname).toBe('/scan');
-    const result = await register('S1', { classCode: url.searchParams.get('c'), sig: url.searchParams.get('sig') });
+    const result = await register('S1', { classCode: url.searchParams.get('c'), sig: url.searchParams.get('sig'), assignmentId: url.searchParams.get('a') });
     expect(result.status).toBe(201);
     expect(result.body.registration.studentId).toBe('S1');
   });
@@ -26,10 +45,10 @@ describe('GET /api/classes and QR', () => {
     expect(res.body.items.map((c: any) => c.code).sort()).toEqual(['ai', 'iot', 'oop']);
   });
   it('QR is an SVG by default and a PNG with format=png', async () => {
-    const svg = await request(app).get('/api/classes/oop/qr').buffer(true).parse((r, cb) => { let t = ''; r.setEncoding('utf8'); r.on('data', d => { t += d; }); r.on('end', () => cb(null, t)); });
+    const svg = await request(app).get('/api/classes/oop/qr?a=oop-gael').buffer(true).parse((r, cb) => { let t = ''; r.setEncoding('utf8'); r.on('data', d => { t += d; }); r.on('end', () => cb(null, t)); });
     expect(svg.headers['content-type']).toContain('image/svg+xml');
     expect(String(svg.body)).toContain('<svg');
-    const png = await request(app).get('/api/classes/oop/qr?format=png').buffer().parse((r, cb) => {
+    const png = await request(app).get('/api/classes/oop/qr?a=oop-gael&format=png').buffer().parse((r, cb) => {
       const c: Buffer[] = []; r.on('data', d => c.push(d)); r.on('end', () => cb(null, Buffer.concat(c)));
     });
     expect(png.headers['content-type']).toContain('image/png');
@@ -43,49 +62,49 @@ describe('GET /api/classes and QR', () => {
 
 describe('POST /api/registrations', () => {
   it('registers the logged-in student with a valid signature', async () => {
-    const res = await register('S1', { classCode: 'oop', sig: signClass('oop') });
+    const res = await register('S1', signed('oop'));
     expect(res.status).toBe(201);
     expect(res.body.registration).toMatchObject({ studentId: 'S1', classCode: 'oop', className: 'OOP' });
     expect(await prisma.registration.count()).toBe(1);
   });
   it('requires login → 401', async () => {
-    const res = await request(app).post('/api/registrations').send({ classCode: 'oop', sig: signClass('oop') });
+    const res = await request(app).post('/api/registrations').send(signed('oop'));
     expect(res.status).toBe(401);
   });
   it('tampered, wrong-length and empty sigs → 400 INVALID_QR and nothing saved', async () => {
     for (const sig of ['AAAAAAAAAAAAAAAA', 'abc']) {
-      const res = await register('S1', { classCode: 'oop', sig });
+      const res = await register('S1', { ...signed('oop'), sig });
       expect(res.status).toBe(400); expect(res.body.error.code).toBe('INVALID_QR');
     }
-    expect((await register('S1', { classCode: 'oop', sig: '' })).body.error.code).toBe('VALIDATION_ERROR');
+    expect((await register('S1', { ...signed('oop'), sig: '' })).body.error.code).toBe('VALIDATION_ERROR');
     expect(await prisma.registration.count()).toBe(0);
   });
   it("another class's valid sig does not register the requested class", async () => {
-    const res = await register('S1', { classCode: 'ai', sig: signClass('oop') });
+    const res = await register('S1', { ...signed('oop'), classCode: 'ai' });
     expect(res.body.error.code).toBe('INVALID_QR');
   });
   it('unknown class → 404 CLASS_NOT_FOUND; missing fields → 400 VALIDATION_ERROR', async () => {
-    expect((await register('S1', { classCode: 'nope', sig: 'x' })).body.error.code).toBe('CLASS_NOT_FOUND');
+    expect((await register('S1', { ...signed('oop'), classCode: 'nope' })).body.error.code).toBe('CLASS_NOT_FOUND');
     expect((await register('S1', {})).body.error.code).toBe('VALIDATION_ERROR');
   });
   it('same student + class within 2 minutes returns the existing registration (200)', async () => {
-    const a = await register('S1', { classCode: 'oop', sig: signClass('oop') });
-    const b = await register('S1', { classCode: 'oop', sig: signClass('oop') });
+    const a = await register('S1', signed('oop'));
+    const b = await register('S1', signed('oop'));
     expect(b.status).toBe(200); expect(b.body.registration.id).toBe(a.body.registration.id);
   });
   it('a registration older than 2 minutes does not block a new one', async () => {
-    await prisma.registration.create({ data: { studentId: 'S1', classCode: 'oop', registeredAt: new Date(Date.now() - 3 * 60_000) } });
-    expect((await register('S1', { classCode: 'oop', sig: signClass('oop') })).status).toBe(201);
+    await prisma.registration.create({ data: { studentId: 'S1', classCode: 'oop', assignmentId: 'oop-gael', registeredAt: new Date(Date.now() - 3 * 60_000) } });
+    expect((await register('S1', signed('oop'))).status).toBe(201);
   });
   it('different student or different class is not a duplicate', async () => {
-    await register('S1', { classCode: 'oop', sig: signClass('oop') });
-    expect((await register('S2', { classCode: 'oop', sig: signClass('oop') })).status).toBe(201);
-    expect((await register('S1', { classCode: 'ai', sig: signClass('ai') })).status).toBe(201);
+    await register('S1', signed('oop'));
+    expect((await register('S2', signed('oop'))).status).toBe(201);
+    expect((await register('S1', signed('ai'))).status).toBe(201);
   });
   it('two simultaneous scans yield exactly one registration', async () => {
     const [a, b] = await Promise.all([
-      register('S1', { classCode: 'oop', sig: signClass('oop') }),
-      register('S1', { classCode: 'oop', sig: signClass('oop') }),
+      register('S1', signed('oop')),
+      register('S1', signed('oop')),
     ]);
     expect(a.body.registration.id).toBe(b.body.registration.id);
     expect(await prisma.registration.count()).toBe(1);
@@ -93,15 +112,34 @@ describe('POST /api/registrations', () => {
 });
 
 describe('GET /api/registrations', () => {
-  it('demo teacher portal lists registrations from all students without login', async () => {
-    await register('S1', { classCode: 'oop', sig: signClass('oop') });
-    await register('S2', { classCode: 'ai', sig: signClass('ai') });
-    const res = await request(app).get('/api/teacher/registrations');
-    expect(res.status).toBe(200);
-    expect(res.headers['cache-control']).toBe('no-store');
-    expect(res.body.items).toHaveLength(2);
-    expect(res.body.items.map((r: any) => r.studentId).sort()).toEqual(['S1', 'S2']);
-    expect(res.body.items.every((r: any) => r.className && r.studentName && r.registeredAt)).toBe(true);
+  it('limits teachers to their assignments and includes legacy rows for admins', async () => {
+    expect((await request(app).get('/api/teacher/registrations')).status).toBe(401);
+    expect((await request(app).get('/api/teacher/registrations').set(auth('S1'))).status).toBe(401);
+    expect((await staffLogin('gael', 'admin')).status).toBe(401);
+    expect((await request(app).post('/api/staff/login').send({ username: 'gael', password: 'wrong', role: 'teacher' })).status).toBe(401);
+    expect((await register('S1', signed('oop'))).status).toBe(201);
+    expect((await register('S1', signed('oop', 'oop-diego'))).status).toBe(201);
+    await prisma.registration.create({ data: { studentId: 'S1', classCode: 'oop' } });
+    const teacherSession = await staffLogin('gael', 'teacher');
+    expect(teacherSession.status).toBe(200);
+    const teacherHeader = { Authorization: 'Bearer ' + teacherSession.body.token };
+    const teacherRows = await request(app).get('/api/teacher/registrations').set(teacherHeader);
+    expect(teacherRows.body.items.map((r: any) => r.teacherName)).toEqual(['Gael']);
+    expect((await request(app).get('/api/admin/registrations').set(teacherHeader)).status).toBe(401);
+    const adminSession = await staffLogin('admin', 'admin');
+    expect(adminSession.status).toBe(200);
+    const adminRows = await request(app).get('/api/admin/registrations').set('Authorization', 'Bearer ' + adminSession.body.token);
+    expect(adminRows.status).toBe(200);
+    expect(adminRows.body.items).toHaveLength(3);
+    expect(adminRows.body.items).toEqual(expect.arrayContaining([
+      expect.objectContaining({ teacherName: null }),
+      expect.objectContaining({ teacherName: 'Diego' }),
+    ]));
+  });
+  it('rejects retired QR links and tampered assignments', async () => {
+    expect((await register('S1', { classCode: 'oop', sig: signClass('oop') })).status).toBe(410);
+    expect((await register('S1', { ...signed('oop'), assignmentId: 'oop-diego' })).status).toBe(400);
+    expect(await prisma.registration.count()).toBe(0);
   });
   it("lists only the caller's registrations, newest first", async () => {
     await prisma.registration.create({ data: { studentId: 'S1', classCode: 'oop', registeredAt: new Date(Date.now() - 600_000) } });

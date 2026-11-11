@@ -1,6 +1,10 @@
 <script setup lang="ts">
-defineProps<{ name: 'student' | 'teacher' | 'home' | 'arrow' | 'book' | 'history' | 'logout' | 'qr' | 'check' }>();
+defineProps<{ name: 'student' | 'teacher' | 'admin' | 'home' | 'arrow' | 'book' | 'history' | 'logout' | 'qr' | 'check' | 'menu' | 'filter-clear' | 'refresh' }>();
 const paths = {
+  'filter-clear': ['M3 4h18l-7 8v4l-4 2v-6L3 4Z', 'm17 17 5 5', 'm22 17-5 5'],
+  refresh: ['M20 7a8 8 0 0 0-14-2L3 8', 'M3 3v5h5', 'M4 17a8 8 0 0 0 14 2l3-3', 'M21 21v-5h-5'],
+  menu: ['M4 6h16', 'M4 12h16', 'M4 18h16'],
+  admin: ['M12 22s7-3 7-10V5l-7-3-7 3v7c0 7 7 10 7 10Z', 'm9 12 2 2 4-4'],
   student: ['m2 8 10-5 10 5-10 5L2 8Z', 'M6 10v6c3 3 9 3 12 0v-6', 'M22 8v7'],
   teacher: ['M10 3h11v13H10', 'M14 7h4', 'M14 11h4', 'M9 8a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z', 'M2 21v-5a4 4 0 0 1 8 0v5', 'M17 16v5', 'M14 21h6'],
   home: ['m3 10 9-7 9 7', 'M5 9v12h14V9', 'M9 21v-8h6v8'],

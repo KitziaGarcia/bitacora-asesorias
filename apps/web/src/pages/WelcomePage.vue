@@ -19,6 +19,12 @@ import AppIcon from '../components/AppIcon.vue';
         <p>Un espacio para acompañar a tus estudiantes y dar seguimiento a sus asesorías.</p>
         <span class="role-action">Entrar como profesor <AppIcon name="arrow" /></span>
       </RouterLink>
+      <RouterLink class="role-card" to="/admin">
+        <span class="role-icon"><AppIcon name="admin" /></span>
+        <h2>Soy administrador</h2>
+        <p>Consulta los registros generales y administra las materias y los maestros.</p>
+        <span class="role-action">Entrar como administrador <AppIcon name="arrow" /></span>
+      </RouterLink>
     </div>
     <p class="welcome-note">Asesorías académicas · Universidad Autónoma de Baja California</p>
   </section>

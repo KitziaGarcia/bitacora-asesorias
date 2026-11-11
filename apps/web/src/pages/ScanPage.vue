@@ -16,9 +16,14 @@ const error = ref('');
 async function run() {
   const q = parseScanQuery(route.query);
   if (!q) { missing.value = true; return; }
+  if (!q.assignmentId) {
+    error.value = errorMessage('LEGACY_QR');
+    state.value = 'error';
+    return;
+  }
   state.value = 'loading';
   try {
-    registration.value = await registerScan(q.classCode, q.sig);
+    registration.value = await registerScan(q.classCode, q.sig, q.assignmentId);
     state.value = 'success';
     // drop the one-time QR params so reload/Back does not re-register
     router.replace({ path: '/scan', query: {} }).catch(() => {});
@@ -37,11 +42,12 @@ onMounted(run);
     <template v-else-if="state === 'success' && registration">
       <p class="success icon-heading"><AppIcon name="check" /> Registrado</p>
       <p><strong>{{ registration.className }}</strong></p>
+      <p>{{ registration.teacherName ?? 'Sin maestro asignado' }}</p>
       <p>{{ new Date(registration.registeredAt).toLocaleString('es-MX') }}</p>
     </template>
     <template v-else>
       <p class="error" role="alert">{{ error }}</p>
-      <button class="btn" type="button" @click="run">Intentar de nuevo</button>
+      <button v-if="route.query.a" class="btn" type="button" @click="run">Intentar de nuevo</button>
     </template>
     <RouterLink class="link" to="/">Volver a las clases</RouterLink>
   </section>

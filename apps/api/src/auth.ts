@@ -21,7 +21,8 @@ export const authenticate: RequestHandler = async (req, _res, next) => {
     if (!match) throw unauthorized();
     let sub: string | undefined;
     try {
-      sub = jwt.verify(match[1], secret(), { algorithms: ['HS256'] }).sub as string | undefined;
+      const claims = jwt.verify(match[1], secret(), { algorithms: ['HS256'] });
+      if (typeof claims !== 'string' && claims.role === undefined) sub = claims.sub;
     } catch {
       throw unauthorized();
     }

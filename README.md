@@ -1,9 +1,8 @@
-# Bitacora de asesorias - class QR registration MVP
+# Bitácora de asesorías académicas
 
-A student logs in with their school ID, picks a class, and a QR code for that class is shown. Another student (or the same one on a phone) scans it with the phone camera, lands on the app, and the visit is registered against their ID. They can see their registrations in the app.
+Students register advising visits with a signed QR for a teacher and class assignment. Teachers see only their own records, and administrators can review all records.
 
-**Included:** student-ID login (JWT), preset class list, per-class signed QR, scan landing page, "Tus registros" list, 2-minute duplicate guard (re-scanning the same class within 2 minutes returns the existing row).
-**Not included:** the teacher side, real authentication, time-limited QR codes.
+See [BITACORA.md](BITACORA.md) for the role flows and demo accounts, and [CONTINUAR_ADMIN.md](CONTINUAR_ADMIN.md) to extend the administrator portal.
 
 Monorepo layout:
 
@@ -26,8 +25,9 @@ Environment variables (`apps/api/.env`):
 | `PORT` | API port (default 3000) |
 | `DATABASE_URL` | SQLite file URL |
 | `JWT_SECRET` | Signs login tokens |
-| `QR_SECRET` | Signs the per-class QR links |
+| `QR_SECRET` | Signs the QR links for teacher and class assignments |
 | `APP_BASE_URL` | Base URL encoded in the QR (the web app's address) |
+| `DEMO_STAFF_PASSWORD` | Initial password for new demo staff accounts |
 
 **Change `JWT_SECRET` and `QR_SECRET` from `change-me` before sharing the app.** If they are unset, the code falls back to the guessable default `dev-secret`.
 
@@ -58,14 +58,14 @@ Classes live in `packages/shared/src/index.ts`. Students are not in the code: th
 2. A teammate runs `git pull && npm install && npm run db:setup` and sees it (the seed only upserts, never deletes).
 3. A teammate who wants the same students just logs in with those IDs on their own machine.
 
-The schema is `apps/api/prisma/schema.prisma`. The teacher side extends it: new models and migrations go there, so coordinate edits to that file.
+The schema is `apps/api/prisma/schema.prisma`. It includes staff accounts and assignments between teachers and classes.
 
 ## Phone testing
 
 1. Put the computer and the phone on the same Wi-Fi.
 2. Find the computer's LAN IP (`ipconfig` on Windows).
 3. In `apps/api/.env` set `APP_BASE_URL=http://<LAN-IP>:5173` and restart the API (the QR encodes this URL).
-4. On the computer open `http://<LAN-IP>:5173`, log in, and click a class to show its QR.
+4. On the computer open `http://<LAN-IP>:5173`, log in, choose a teacher, and open a class QR.
 5. Scan it with the phone's native camera app. The first time, enter your student ID on the phone (the phone has its own browser session). The phone only needs port 5173: the Vite `/api` proxy forwards API calls to the API on the computer.
 
 If the phone cannot connect, allow Node/port 5173 through the Windows firewall.
@@ -79,25 +79,25 @@ All under `/api`. Errors use the envelope `{ "error": { "code", "message" } }`.
 | POST | `/login` | none | Body `{ studentId }`. Creates the student if the ID is new. 200 `{ token, student }`; 400 `VALIDATION_ERROR` |
 | GET | `/me` | Bearer JWT | 200 `{ student }`; `UNAUTHORIZED` (401) if missing/invalid token |
 | GET | `/classes` | none | 200 `{ items: [{ code, name }] }` |
-| GET | `/classes/:code/qr` | none | SVG QR (`?format=png` for PNG); 404 `CLASS_NOT_FOUND` |
-| POST | `/registrations` | Bearer JWT | Body `{ classCode, sig }`. 201 created; 200 duplicate within 2 min (existing row); 400 `VALIDATION_ERROR` / `INVALID_QR`; 404 `CLASS_NOT_FOUND`; 401 `UNAUTHORIZED` |
+| GET | `/classes/:code/qr?a=<assignmentId>` | none | Signed SVG QR. Optional `&format=png` or `&format=json`. |
+| POST | `/registrations` | Bearer JWT | Body `{ classCode, sig, assignmentId }`. 201 created; 200 duplicate for the same assignment within 2 min; 410 for retired QR links without an assignment. |
 | GET | `/registrations` | Bearer JWT | 200 `{ items }`, only the caller's rows, newest first; 401 `UNAUTHORIZED` |
 
 Error codes: `VALIDATION_ERROR`, `INVALID_QR`, `UNAUTHORIZED`, `CLASS_NOT_FOUND`, `NOT_FOUND` (unknown route), `INTERNAL`.
 
-Web routes: `/login`, `/` (classes), `/scan?c=<code>&sig=<sig>` (scan landing).
+Web routes: `/inicio`, `/login`, `/` (student portal), `/scan?c=<code>&a=<assignmentId>&sig=<sig>`, `/profesores`, and `/admin`.
 
 ## Limitations
 
 - Login by student ID alone is **not secure**: anyone who knows an ID can sign in as that student.
-- The QR image endpoint is public and the QR is not time-limited (the signature only proves the link was issued by this server for that class).
+- The QR image endpoint is public and the QR is not time-limited (the signature only proves the link was issued by this server for that assignment).
 - **Registrations are self-reported, not proof of presence.** The QR signature never changes and the QR image is public, so any logged-in student can register for any class from anywhere. Treat a registration as proof of attendance only once the QR is time-limited or shown only by the teacher (relevant for the teacher-side work).
 - The double-scan lock is per-process: run a single API instance.
 - One JWT per browser (stored locally); logging in as someone else on the same browser replaces it.
 
 ## Status
 
-The UI pages have been verified only by unit tests, type-check/build, and `curl` through the Vite proxy. They have **not** yet been exercised in a real browser or on a phone. Manual check to run: login -> click a class -> QR appears -> scan with the phone -> "✓ Registrado" shown -> the row appears under "Tus registros"; then edit the `sig` in the scanned link and confirm an error is shown.
+The UI pages have been verified only by unit tests, type-check/build, and `curl` through the Vite proxy. They have **not** yet been exercised in a real browser or on a phone. Manual check to run: login -> choose a teacher and class -> QR appears -> scan with the phone -> "✓ Registrado" shown -> the row appears under "Tus registros"; then edit the `sig` in the scanned link and confirm an error is shown.
 
 ## Notes
 

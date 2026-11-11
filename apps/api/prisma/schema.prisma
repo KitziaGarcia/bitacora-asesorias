@@ -18,6 +18,27 @@ model Class {
   code          String         @id // e.g. "oop"
   name          String
   registrations Registration[]
+  assignments TeachingAssignment[]
+}
+
+model Staff {
+  id           String @id
+  username     String @unique
+  name         String
+  role         String
+  passwordHash String
+  assignments  TeachingAssignment[]
+}
+
+model TeachingAssignment {
+  id            String @id @default(cuid())
+  teacherId     String
+  classCode     String
+  teacher       Staff @relation(fields: [teacherId], references: [id], onDelete: Restrict)
+  class         Class @relation(fields: [classCode], references: [code], onDelete: Restrict)
+  registrations Registration[]
+
+  @@unique([teacherId, classCode])
 }
 
 model Registration {
@@ -25,8 +46,11 @@ model Registration {
   studentId    String
   classCode    String
   registeredAt DateTime @default(now())
+  assignmentId String?
+  assignment TeachingAssignment? @relation(fields: [assignmentId], references: [id], onDelete: Restrict)
   student      Student  @relation(fields: [studentId], references: [id])
   class        Class    @relation(fields: [classCode], references: [code])
 
   @@index([studentId, classCode, registeredAt])
+  @@index([assignmentId, registeredAt])
 }

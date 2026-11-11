@@ -597,3 +597,100 @@ p{
 @media (max-width: 760px) { .brand-crest { width: 40px; height: 55px; } .class-card { padding: 18px; } }
 
 .class-qr-button:hover { background: #f2c451; border-color: #f2c451; }
+
+.role-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); max-width: 1080px; }
+.role-card { display: flex; flex-direction: column; }
+.role-card p { flex: 1; }
+.teacher-picker {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(135px, 1fr));
+  gap: 12px;
+  margin: 0 0 24px;
+  padding: 0;
+  min-width: 0;
+  border: 0;
+}
+.teacher-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 58px;
+  padding: 12px;
+  border: 1px solid #007348;
+  border-radius: 4px;
+  color: #005c3a;
+  background: #fff;
+  cursor: pointer;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.teacher-card:hover { background: #edf5ef; }
+.teacher-card-selected, .teacher-card-selected:hover { background: #007348; color: #fff; }
+.teacher-card:has(input:focus-visible) { outline: 3px solid var(--gold); outline-offset: 3px; }
+.teacher-card-check { margin-left: auto; color: #ffdb80; }
+.teacher-subjects-title { margin-bottom: 12px; font-size: 17px; }
+.record-filters label, .filter-label { font-size: 13px; font-weight: 600; }
+.container:has(> .admin-layout) { display: flex; max-width: none; padding: 0; }
+.admin-layout { display: grid; grid-template-columns: 25% minmax(0, 1fr); width: 100%; }
+.admin-layout-collapsed { grid-template-columns: 64px minmax(0, 1fr); }
+.admin-sidebar { background: #007348; color: #fff; padding: 12px; }
+.admin-menu-toggle {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 44px;
+  margin-bottom: 14px;
+  border: 1px solid #fff;
+  border-radius: 4px;
+  background: #007348;
+  color: #fff;
+}
+.admin-menu-toggle:hover { background: #005c3a; }
+.admin-sidebar nav { display: grid; gap: 4px; }
+.admin-sidebar nav a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 10px;
+  border-left: 3px solid transparent;
+  border-radius: 4px;
+  font-size: 14px;
+}
+.admin-sidebar nav a:hover, .admin-sidebar nav a.selected { background: #005c3a; }
+.admin-sidebar nav a.selected { border-left-color: #ffdb80; }
+.admin-layout-collapsed .admin-sidebar nav a { justify-content: center; padding-inline: 0 3px; }
+.admin-content { min-width: 0; padding: clamp(16px, 3vw, 48px); }
+.record-filters { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; padding: 20px 26px 0; }
+.record-filters label { display: grid; gap: 7px; min-width: 0; }
+.record-filters .input { min-height: 44px; min-width: 0; font-size: 13px; font-weight: 400; line-height: 1.35; }
+.search-select { position: relative; display: grid; align-content: start; gap: 7px; min-width: 0; }
+.search-select-trigger { display: flex; align-items: center; justify-content: space-between; gap: 10px; text-align: left; }
+.search-select-trigger span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.select-chevron { width: 8px; height: 8px; border-right: 2px solid #007348; border-bottom: 2px solid #007348; transform: rotate(45deg); flex-shrink: 0; }
+.search-select-trigger[aria-expanded="true"] { border-color: #007348; }
+.search-select-trigger[aria-expanded="true"] .select-chevron { transform: rotate(225deg); }
+.search-select-menu {
+  position: fixed;
+  inset: auto;
+  margin: 0;
+  overflow: auto;
+  padding: 8px;
+  border: 1px solid #007348;
+  border-radius: 4px;
+  background: #fff;
+}
+.search-select-menu ul { list-style: none; margin: 6px 0 0; padding: 0; max-height: 200px; overflow-y: auto; }
+.search-select-menu li button { width: 100%; padding: 8px; border: 0; border-radius: 4px; background: #fff; color: #203e30; text-align: left; font-size: 13px; }
+.search-select-menu li button:hover, .search-select-menu li button:focus-visible { background: #edf5ef; }
+.search-select-menu li button[aria-pressed="true"] { background: #007348; color: #fff; }
+.search-select-empty { padding: 10px; font-size: 13px; }
+.record-actions { justify-content: flex-end; gap: 12px; padding-block: 12px; }
+.record-actions .btn { width: 40px; min-height: 40px; padding: 0; margin-left: 0; }
+.record-actions .icon { width: 19px; height: 19px; }
+@media (max-width: 760px) {
+  .role-grid { grid-template-columns: minmax(0, 1fr); }
+  .admin-sidebar nav a { flex-direction: column; text-align: center; overflow-wrap: anywhere; }
+  .admin-layout-collapsed .admin-sidebar nav a { flex-direction: row; }
+  .record-filters { padding-inline: 18px; }
+}

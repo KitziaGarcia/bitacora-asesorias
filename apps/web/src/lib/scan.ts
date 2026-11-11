@@ -1,11 +1,14 @@
-export function parseScanQuery(q: Record<string, unknown>): { classCode: string; sig: string } | null {
-  const { c, sig } = q;
+export function parseScanQuery(q: Record<string, unknown>): { classCode: string; sig: string; assignmentId?: string } | null {
+  const { c, sig, a } = q;
   if (typeof c !== 'string' || c === '' || typeof sig !== 'string' || sig === '') return null;
-  return { classCode: c, sig };
+  if (a === undefined) return { classCode: c, sig };
+  if (typeof a !== 'string' || !a) return null;
+  return { classCode: c, sig, assignmentId: a };
 }
 
 const MESSAGES: Record<string, string> = {
   INVALID_QR: 'Este código QR no es válido. Escanea de nuevo el código QR de una clase.',
+  LEGACY_QR: 'Este QR ya no está vigente. Selecciona al maestro y la materia para obtener un QR nuevo.',
   CLASS_NOT_FOUND: 'Esa clase no existe.',
   STUDENT_NOT_FOUND: 'No encontramos esa matrícula.',
   UNAUTHORIZED: 'Tu sesión expiró. Inicia sesión de nuevo.',

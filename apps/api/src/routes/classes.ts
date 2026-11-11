@@ -30,7 +30,11 @@ classesRouter.get('/classes/:code/qr', async (req, res, next) => {
   try {
     const cls = await prisma.class.findUnique({ where: { code: req.params.code } });
     if (!cls) throw new HttpError(404, 'CLASS_NOT_FOUND', 'Class not found');
-    const url = buildScanUrl(cls.code);
+    const assignmentId = req.query.a;
+    if (typeof assignmentId !== 'string' || !await prisma.teachingAssignment.findFirst({ where: { id: assignmentId, classCode: cls.code } })) {
+      throw new HttpError(404, 'INVALID_QR', 'Teaching assignment not found');
+    }
+    const url = buildScanUrl(cls.code, assignmentId);
     if (req.query.format === 'json') {
       res.json({ url });
     } else if (req.query.format === 'png') {
