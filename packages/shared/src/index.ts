@@ -3,6 +3,10 @@ import { z } from 'zod';
 export interface ClassInfo { code: string; name: string }
 export interface RegistrationDto { id: string; studentId: string; classCode: string; className: string; registeredAt: string; teacherId: string | null; teacherName: string | null }
 export interface TeacherInfo { id: string; name: string; classes: (ClassInfo & { assignmentId: string })[] }
+export interface AdminTeacherInfo extends TeacherInfo { username: string }
+export interface AdminClassInfo extends ClassInfo {
+  assignments: { id: string; teacherId: string; teacherName: string }[]
+}
 export type StaffRole = 'teacher' | 'admin';
 export interface StaffInfo { name: string; role: StaffRole }
 

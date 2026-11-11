@@ -1,4 +1,4 @@
-import type { ClassInfo, RegistrationDto, StudentDto, StaffInfo, StaffRole, TeacherInfo } from '@bitacora/shared';
+import type { AdminClassInfo, AdminTeacherInfo, ClassInfo, RegistrationDto, StudentDto, StaffInfo, StaffRole, TeacherInfo } from '@bitacora/shared';
 import { getToken } from './lib/token';
 import { getStaffSession } from './lib/staff-session';
 
@@ -64,3 +64,29 @@ export const getStaffRegistrations = async (role: StaffRole): Promise<TeacherReg
   (await request<{ items: TeacherRegistration[] }>(`/${role}/registrations`, {}, {
     token: getStaffSession(role)?.token ?? null, skip401: true,
   })).items;
+
+const adminRequest = <T>(path: string, init: RequestInit = {}) => request<T>(path, init, {
+  token: getStaffSession('admin')?.token ?? null,
+  skip401: true,
+});
+
+export const getAdminTeachers = async (): Promise<AdminTeacherInfo[]> =>
+  (await adminRequest<{ items: AdminTeacherInfo[] }>('/admin/teachers')).items;
+
+export const getAdminClasses = async (): Promise<AdminClassInfo[]> =>
+  (await adminRequest<{ items: AdminClassInfo[] }>('/admin/classes')).items;
+
+export const createAdminClass = async (payload: { code: string; name: string; teacherId?: string }) =>
+  (await adminRequest<{ item: ClassInfo }>('/admin/classes', {
+    method: 'POST', body: JSON.stringify(payload),
+  })).item;
+
+export const createAdminAssignment = async (payload: { classCode: string; teacherId: string }) =>
+  (await adminRequest<{ item: { id: string; classCode: string; teacherId: string } }>('/admin/assignments', {
+    method: 'POST', body: JSON.stringify(payload),
+  })).item;
+
+export const createAdminTeacher = async (payload: { username: string; name: string; password: string; classCodes: string[] }) =>
+  (await adminRequest<{ item: { id: string; username: string; name: string } }>('/admin/teachers', {
+    method: 'POST', body: JSON.stringify(payload),
+  })).item;

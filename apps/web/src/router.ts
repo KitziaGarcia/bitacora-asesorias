@@ -8,7 +8,8 @@ import WelcomePage from './pages/WelcomePage.vue';
 import TeacherPage from './pages/TeacherPage.vue';
 import StaffLoginPage from './pages/StaffLoginPage.vue';
 import AdminPage from './pages/AdminPage.vue';
-import AdminPlaceholder from './pages/AdminPlaceholder.vue';
+import AdminClassesPage from './pages/AdminClassesPage.vue';
+import AdminTeachersPage from './pages/AdminTeachersPage.vue';
 import { getStaffSession } from './lib/staff-session';
 
 export const router = createRouter({
@@ -22,8 +23,8 @@ export const router = createRouter({
       path: '/admin', component: AdminPage, meta: { staffRole: 'admin' },
       children: [
         { path: '', component: TeacherPage, props: { role: 'admin' } },
-        { path: 'materias', component: AdminPlaceholder },
-        { path: 'maestros', component: AdminPlaceholder },
+        { path: 'materias', component: AdminClassesPage },
+        { path: 'maestros', component: AdminTeachersPage },
       ],
     },
     { path: '/login', component: LoginPage, meta: { public: true } },

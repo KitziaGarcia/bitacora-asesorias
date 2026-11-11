@@ -688,9 +688,30 @@ p{
 .record-actions { justify-content: flex-end; gap: 12px; padding-block: 12px; }
 .record-actions .btn { width: 40px; min-height: 40px; padding: 0; margin-left: 0; }
 .record-actions .icon { width: 19px; height: 19px; }
+.admin-page { display: grid; gap: 24px; }
+.admin-page .section-heading { margin-bottom: 0; }
+.admin-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.admin-form { gap: 11px; }
+.admin-form h3 { color: #fff; margin-bottom: 5px; }
+.admin-form label { color: #fff; font-size: 13px; font-weight: 600; margin-top: 5px; }
+.admin-form .input { min-height: 44px; }
+.admin-form .btn { margin-top: 8px; }
+.form-help { color: #d9f0e2; font-size: 12px; line-height: 1.5; margin-top: -5px; }
+.form-help-intro { min-height: 36px; }
+.admin-notice { margin: 0; background: #007348; color: #fff; }
+.admin-form-columns { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+.admin-form-columns > div { display: grid; align-content: start; gap: 7px; }
+.teacher-form .btn { align-self: start; }
+.admin-list-panel { margin-top: 0; }
+.chip-list { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { display: inline-block; border: 1px solid #8fc3a8; border-radius: 20px; padding: 5px 9px; color: #006740; background: #edf5ef; font-size: 12px; white-space: nowrap; }
+@media (max-width: 900px) {
+  .admin-form-columns { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 @media (max-width: 760px) {
   .role-grid { grid-template-columns: minmax(0, 1fr); }
   .admin-sidebar nav a { flex-direction: column; text-align: center; overflow-wrap: anywhere; }
   .admin-layout-collapsed .admin-sidebar nav a { flex-direction: row; }
   .record-filters { padding-inline: 18px; }
+  .admin-form-grid, .admin-form-columns { grid-template-columns: minmax(0, 1fr); }
 }
